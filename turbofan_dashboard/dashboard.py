@@ -7,6 +7,8 @@ import plotly.graph_objects as go
 import pickle
 import seaborn as sns
 import time
+import numpy as np
+import random
 
 
 html_header="""
@@ -38,50 +40,65 @@ footer {visibility: hidden;}
 </style> """, unsafe_allow_html=True)
 
 # request data
-data = pickle.load(open("data/Xtest.p", "rb"))
+data = pickle.load(open("data/Xtrain.p", "rb"))
 units = data.index.get_level_values("unit_number").unique()
 
+k = sorted(data.index, key=lambda x: (x[1], random.random()))
+data_shuffled = data.loc[k]
 
-# new_measurement = {
-#     "sensor2": 641.71,
-#     "sensor3": 1588.45,
-#     "sensor4": 1395.42,
-#     "sensor7": 554.85,
-#     "sensor8": 2388.01,
-#     "sensor9": 9054.42,
-#     "sensor11": 47.5,
-#     "sensor12": 522.16,
-#     "sensor13": 2388.06,
-#     "sensor14": 8139.62,
-#     "sensor15": 8.3803,
-#     "sensor17": 393.0,
-#     "sensor20": 39.02,
-#     "sensor21": 23.3916,
-#     "sensor11_lag_1": 47.2,
-#     "sensor12_lag_1": 521.72,
-#     "sensor13_lag_1": 2388.03,
-#     "sensor14_lag_1": 8125.55,
-#     "sensor15_lag_1": 8.4052,
-#     "sensor17_lag_1": 392.0,
-#     "sensor2_lag_1": 643.02,
-#     "sensor20_lag_1": 38.86,
-#     "sensor21_lag_1": 23.3735,
-#     "sensor3_lag_1": 1585.29,
-#     "sensor4_lag_1": 1398.21,
-#     "sensor7_lag_1": 553.9,
-#     "sensor8_lag_1": 2388.04,
-#     "sensor9_lag_1": 9050.17
-#     }
+#print(data_shuffled.head(3))
 
-st.write("Model prediction for remaining useful life")
-b = st.empty()
-while True:
-    for unit in units:
-        for index, row in data.loc[unit].iterrows():
-            new_measurement = row.to_dict()
-            response = requests.post('http://127.0.0.1:8000/predict', json=new_measurement)
-            pred = int(response.json()["prediction"])
-            #print(pred)
-            b.text(f'{pred}')
-            time.sleep(0.5)
+#df_indices = data_shuffled.index
+#for index, row in data_shuffled.iterrows():
+#    new_measurement = row.to_dict()
+
+#print(new_measurement)
+#print(df_indices[0: 5])
+#print(df_indices[-1])
+#for index, row in data_shuffled.loc[unit].iterrows():
+#    new_measurement = row.to_dict()
+
+progress_bar = st.sidebar.progress(0)
+status_text = st.sidebar.empty()
+pred = np.array([[0]])
+chart = st.line_chart(pred)
+
+unit = 58
+for index, row in data.loc[unit].iterrows():
+    data_len = data.loc[unit].shape[0]
+    percent_complete = (index) / data_len
+    new_measurement = row.to_dict()
+    response = requests.post('http://127.0.0.1:8000/predict', json=new_measurement)
+    pred = np.array([[int(response.json()["prediction"])]])
+    status_text.text(f"{percent_complete:.2f} Complete")
+    chart.add_rows(pred)
+    progress_bar.progress(percent_complete)
+    #print(pred)
+    #b.text(f'unit: {unit}  index: {index}  prediction: {pred}')
+    time.sleep(0.05)
+
+# for unit in units:
+#     for index, row in data.loc[unit].iterrows():
+#         new_measurement = row.to_dict()
+#         response = requests.post('http://127.0.0.1:8000/predict', json=new_measurement)
+#         pred = np.array([[int(response.json()["prediction"])]])
+#         chart.add_rows(pred)
+#         #print(pred)
+#         #b.text(f'unit: {unit}  index: {index}  prediction: {pred}')
+#         time.sleep(0.5)
+
+progress_bar.empty()
+st.button("Re-run")
+
+# st.write("Model prediction for remaining useful life")
+# b = st.empty()
+# while True:
+#     for unit in units:
+#         for index, row in data_shuffled.loc[unit].iterrows():
+#             new_measurement = row.to_dict()
+#             response = requests.post('http://127.0.0.1:8000/predict', json=new_measurement)
+#             pred = int(response.json()["prediction"])
+#             #print(pred)
+#             b.text(f'unit: {unit}  index: {index}  prediction: {pred}')
+#             time.sleep(0.5)
       
