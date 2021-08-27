@@ -41,47 +41,50 @@ st.markdown(""" <style>
 footer {visibility: hidden;}
 </style> """, unsafe_allow_html=True)
 
-# request data
-data = pickle.load(open("data/Xtrain.p", "rb"))
-training_ruls = pickle.load(open("data/ytrain.p", "rb"))
-training_ruls.rename("predicted_rul")
-units = data.index.get_level_values("unit_number").unique()
 
-# Shuffle rows for simulated evolution of units operating cycles
-def sim_operation(df):
-    T = list(df.index)
-    groups = {g:iter([t for t in T if t[0]==g]) for g in dict(T)}
-    sim_idx = [next(groups[v0]) for v0,_ in sample(T,len(T))]
-    return data.loc[sim_idx]
+print('Haggu')
 
-#data_shuffled = sim_operation(data)
+# # request data
+# data = pickle.load(open("data/Xtrain.p", "rb"))
+# training_ruls = pickle.load(open("data/ytrain.p", "rb"))
+# training_ruls.rename("predicted_rul")
+# units = data.index.get_level_values("unit_number").unique()
 
-progress_bar = st.sidebar.progress(0)
-status_text = st.sidebar.empty()
-unit_selector = st.sidebar.selectbox(label="Unit Number",
-                                      options = units,
-                                      help="Select unit number to plot",
-                                      index = 1
-                                      )
+# # Shuffle rows for simulated evolution of units operating cycles
+# def sim_operation(df):
+#     T = list(df.index)
+#     groups = {g:iter([t for t in T if t[0]==g]) for g in dict(T)}
+#     sim_idx = [next(groups[v0]) for v0,_ in sample(T,len(T))]
+#     return data.loc[sim_idx]
 
-placeholder = pd.DataFrame({"empirical_rul": 125, "predicted_rul": 125}, index=[0])
-unit = unit_selector
+# #data_shuffled = sim_operation(data)
 
-st.subheader(f'Emperical and Predicted remaining useful life for unit {unit}')
-chart = st.line_chart(placeholder)
+# progress_bar = st.sidebar.progress(0)
+# status_text = st.sidebar.empty()
+# unit_selector = st.sidebar.selectbox(label="Unit Number",
+#                                       options = units,
+#                                       help="Select unit number to plot",
+#                                       index = 1
+#                                       )
 
-for index, row in data.loc[unit].iterrows():
-    data_len = data.loc[unit].shape[0] + 1
-    percent_complete = (index) / data_len
-    new_measurement = row.to_dict()
-    response = requests.post('http://127.0.0.1:8000/predict', json=new_measurement)
-    pred = int(response.json()["prediction"])
-    emp_rul = training_ruls.loc[unit][index]
-    status_text.text(f"{percent_complete:.2f} Complete")
-    chart.add_rows(pd.DataFrame({"empirical_rul": emp_rul, "predicted_rul": pred}, index=[index]))
-    progress_bar.progress(percent_complete)
-    #b.text(f'unit: {unit}  index: {index}  prediction: {pred}')
-    time.sleep(0.05)
+# placeholder = pd.DataFrame({"empirical_rul": 125, "predicted_rul": 125}, index=[0])
+# unit = unit_selector
+
+# st.subheader(f'Emperical and Predicted remaining useful life for unit {unit}')
+# chart = st.line_chart(placeholder)
+
+# for index, row in data.loc[unit].iterrows():
+#     data_len = data.loc[unit].shape[0] + 1
+#     percent_complete = (index) / data_len
+#     new_measurement = row.to_dict()
+#     response = requests.post('http://127.0.0.1:8000/predict', json=new_measurement)
+#     pred = int(response.json()["prediction"])
+#     emp_rul = training_ruls.loc[unit][index]
+#     status_text.text(f"{percent_complete:.2f} Complete")
+#     chart.add_rows(pd.DataFrame({"empirical_rul": emp_rul, "predicted_rul": pred}, index=[index]))
+#     progress_bar.progress(percent_complete)
+#     #b.text(f'unit: {unit}  index: {index}  prediction: {pred}')
+#     time.sleep(0.05)
 
 
-progress_bar.empty()      
+# progress_bar.empty()      
