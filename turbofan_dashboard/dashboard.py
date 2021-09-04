@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import random
 from random import sample
+import json
 
 
 html_header="""
@@ -41,8 +42,13 @@ st.markdown(""" <style>
 footer {visibility: hidden;}
 </style> """, unsafe_allow_html=True)
 
+# load test payload
+f = open('data/test_payload.json', 'r')
+data: dict = json.loads(f.read())
 
-print('Haggu')
+st.title('Hello, my name is TurboFan App!')
+st.header('And I like to make engine failure predictions!')
+
 
 # # request data
 # data = pickle.load(open("data/Xtrain.p", "rb"))
