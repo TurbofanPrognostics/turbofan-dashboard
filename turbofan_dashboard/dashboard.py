@@ -46,8 +46,19 @@ footer {visibility: hidden;}
 f = open('data/test_payload.json', 'r')
 data: dict = json.loads(f.read())
 
+# make test request
+port = 80
+host = 'turbo-fast-app-dev.us-west-2.elasticbeanstalk.com'
+# use this host when testing local FastAPI docker deployment from streamlit
+# host = 'host.docker.internal' 
+url = f'http://{host}:{port}/predict'
+response = requests.post(url=url, json=data)
+data = response.json()
+length = data['num_predictions']
+
 st.title('Hello, my name is TurboFan App!')
 st.header('And I like to make engine failure predictions!')
+st.header(f'{length}')
 
 
 # # request data
