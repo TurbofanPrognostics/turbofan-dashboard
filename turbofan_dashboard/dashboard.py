@@ -65,7 +65,7 @@ footer {visibility: hidden;}
 port = 80
 host = 'turbo-fast-app-dev.us-west-2.elasticbeanstalk.com'
 # use this host when testing local FastAPI docker deployment from streamlit
-host = 'host.docker.internal' 
+# host = 'host.docker.internal' 
 url = f'http://{host}:{port}/stream_predict'
 
 st.title('Hello, my name is TurboFan App!')
