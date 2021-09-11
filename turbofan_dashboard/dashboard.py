@@ -99,7 +99,7 @@ for index, row in df_.iterrows():
     percent_complete = (index + 1) * 1.0 / data_len
     new_measurement = row.to_dict()
     response = requests.post(url, json=new_measurement)
-    pred: int = int(float(response.json()['prediction']))
+    pred: int = int(response.json()['prediction'])
     status_text.text(f"{percent_complete:.2f} Complete")
     chart.add_rows(pd.DataFrame({"empirical_rul": empirical_rul, "predicted_rul": pred}, index=[index]))
     progress_bar.progress(percent_complete)
