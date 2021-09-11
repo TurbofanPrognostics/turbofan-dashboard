@@ -12,6 +12,25 @@ import pandas as pd
 import random
 from random import sample
 import json
+from typing import List, Tuple
+
+
+@st.cache
+def load_test_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    load test data for simulation
+    """
+    # filenames
+    test_data = 'test_FD001.feather'
+    rul_data = 'rul_FD001.feather'
+    # file paths
+    test_data_file_path = f'data/{test_data}'
+    rul_data_file_path = f'data/{rul_data}'
+
+    test_df = pd.read_feather(test_data_file_path)
+    rul_df = pd.read_feather(rul_data_file_path)
+
+    return test_df, rul_df
 
 
 html_header="""
@@ -42,55 +61,46 @@ st.markdown(""" <style>
 footer {visibility: hidden;}
 </style> """, unsafe_allow_html=True)
 
-# load test payload
-f = open('data/test_payload.json', 'r')
-data: dict = json.loads(f.read())
+# backend request params
+port = 80
+host = 'turbo-fast-app-dev.us-west-2.elasticbeanstalk.com'
+# use this host when testing local FastAPI docker deployment from streamlit
+# host = 'host.docker.internal' 
+url = f'http://{host}:{port}/stream_predict'
 
 st.title('Hello, my name is TurboFan App!')
 st.header('And I like to make engine failure predictions!')
 
+# load test data for simulation
+test_df, rul_df = load_test_data()
 
-# # request data
-# data = pickle.load(open("data/Xtrain.p", "rb"))
-# training_ruls = pickle.load(open("data/ytrain.p", "rb"))
-# training_ruls.rename("predicted_rul")
-# units = data.index.get_level_values("unit_number").unique()
+# get engines
+engines: List[int] = test_df['unit_number'].unique().tolist()
 
-# # Shuffle rows for simulated evolution of units operating cycles
-# def sim_operation(df):
-#     T = list(df.index)
-#     groups = {g:iter([t for t in T if t[0]==g]) for g in dict(T)}
-#     sim_idx = [next(groups[v0]) for v0,_ in sample(T,len(T))]
-#     return data.loc[sim_idx]
+progress_bar = st.sidebar.progress(0)
+status_text = st.sidebar.empty()
+engine_select: int = st.sidebar.selectbox(
+                        label="Engine #",
+                        options=engines,
+                        help="Select engine to plot")
 
-# #data_shuffled = sim_operation(data)
+empirical_rul: int = rul_df.iloc[engine_select].values[0]
+placeholder = pd.DataFrame({"empirical_rul": empirical_rul, "predicted_rul": 125}, index=[0])
 
-# progress_bar = st.sidebar.progress(0)
-# status_text = st.sidebar.empty()
-# unit_selector = st.sidebar.selectbox(label="Unit Number",
-#                                       options = units,
-#                                       help="Select unit number to plot",
-#                                       index = 1
-#                                       )
+st.subheader(f'Emperical and Predicted remaining useful life for engine # {engine_select}')
+chart = st.line_chart(placeholder)
 
-# placeholder = pd.DataFrame({"empirical_rul": 125, "predicted_rul": 125}, index=[0])
-# unit = unit_selector
-
-# st.subheader(f'Emperical and Predicted remaining useful life for unit {unit}')
-# chart = st.line_chart(placeholder)
-
-# for index, row in data.loc[unit].iterrows():
-#     data_len = data.loc[unit].shape[0] + 1
-#     percent_complete = (index) / data_len
-#     new_measurement = row.to_dict()
-#     response = requests.post('http://127.0.0.1:8000/predict', json=new_measurement)
-#     pred = int(response.json()["prediction"])
-#     emp_rul = training_ruls.loc[unit][index]
-#     status_text.text(f"{percent_complete:.2f} Complete")
-#     chart.add_rows(pd.DataFrame({"empirical_rul": emp_rul, "predicted_rul": pred}, index=[index]))
-#     progress_bar.progress(percent_complete)
-#     #b.text(f'unit: {unit}  index: {index}  prediction: {pred}')
-#     time.sleep(0.05)
-
-
-# progress_bar.empty()      
+# run simulation
+df_ = test_df[test_df['unit_number'] == engine_select]
+df_ = df_.reset_index()
+data_len = df_.shape[0]
+percent_complete = 0
+for index, row in df_.iterrows():
+    percent_complete = (index + 1) * 1.0 / data_len
+    new_measurement = row.to_dict()
+    response = requests.post(url, json=new_measurement)
+    pred: int = int(response.json()['prediction'])
+    status_text.text(f"{percent_complete:.2f} Complete")
+    chart.add_rows(pd.DataFrame({"empirical_rul": empirical_rul, "predicted_rul": pred}, index=[index]))
+    progress_bar.progress(percent_complete)
+    time.sleep(0.05)

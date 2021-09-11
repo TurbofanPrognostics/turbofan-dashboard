@@ -16,6 +16,6 @@ Streamlit based application for displaying Remaining Useful Life (RUL) of Turbof
 12. `Enter Environment Name`. Hit `default` if your environment name is present.
 13. `Enter DNS CNAME prefix`. Hit `default` if the name suffices.
 14. `Select a load balancer type`. Enter `2` for `application`.
-15. `Would you like to enable Spot Fleet requirements for this environmnet. Hit `N`.
+15. `Would you like to enable Spot Fleet requirements for this environment.` Hit `N`.
 Elastic Beanstalk should now create the environment and automatically deploy your app for consumption.
 Use the command `eb terminate` and then enter the environment name to tear down the application off AWS Beanstalk. 
