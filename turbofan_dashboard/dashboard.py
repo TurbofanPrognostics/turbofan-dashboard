@@ -12,25 +12,19 @@ import pandas as pd
 import random
 from random import sample
 import json
-from typing import List, Tuple
+from typing import List
 
 
 @st.cache
-def load_test_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
+def load_train_data() -> pd.DataFrame:
     """
-    load test data for simulation
+    load train data for simulation
     """
-    # filenames
-    test_data = 'test_FD001.feather'
-    rul_data = 'rul_FD001.feather'
-    # file paths
-    test_data_file_path = f'data/{test_data}'
-    rul_data_file_path = f'data/{rul_data}'
+    train_data = 'train_FD001.feather'
+    train_data_file_path = f'data/{train_data}'
+    train_df = pd.read_feather(train_data_file_path)
 
-    test_df = pd.read_feather(test_data_file_path)
-    rul_df = pd.read_feather(rul_data_file_path)
-
-    return test_df, rul_df
+    return train_df
 
 
 html_header="""
@@ -72,10 +66,10 @@ st.title('Hello, my name is TurboFan App!')
 st.header('And I like to make engine failure predictions!')
 
 # load test data for simulation
-test_df, rul_df = load_test_data()
+train_df = load_train_data()
 
 # get engines
-engines: List[int] = test_df['unit_number'].unique().tolist()
+engines: List[int] = train_df['unit_number'].unique().tolist()
 
 progress_bar = st.sidebar.progress(0)
 status_text = st.sidebar.empty()
@@ -84,15 +78,17 @@ engine_select: int = st.sidebar.selectbox(
                         options=engines,
                         help="Select engine to plot")
 
-empirical_rul: int = rul_df.iloc[engine_select].values[0]
+# subset training data based on engine selected
+df_ = train_df[train_df['unit_number'] == engine_select]
+df_ = df_.reset_index()
+rul = df_[['RUL']]
+empirical_rul = int(rul.iloc[0])
+df_ = df_.drop(columns=['RUL'])
 placeholder = pd.DataFrame({"empirical_rul": empirical_rul, "predicted_rul": 125}, index=[0])
-
 st.subheader(f'Emperical and Predicted remaining useful life for engine # {engine_select}')
 chart = st.line_chart(placeholder)
 
 # run simulation
-df_ = test_df[test_df['unit_number'] == engine_select]
-df_ = df_.reset_index()
 data_len = df_.shape[0]
 percent_complete = 0
 for index, row in df_.iterrows():
@@ -100,6 +96,7 @@ for index, row in df_.iterrows():
     new_measurement = row.to_dict()
     response = requests.post(url, json=new_measurement)
     pred: int = int(response.json()['prediction'])
+    empirical_rul: int = int(rul.iloc[index])
     status_text.text(f"{percent_complete:.2f} Complete")
     chart.add_rows(pd.DataFrame({"empirical_rul": empirical_rul, "predicted_rul": pred}, index=[index]))
     progress_bar.progress(percent_complete)
