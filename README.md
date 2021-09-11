@@ -1,7 +1,4 @@
 # turbofan-dashboard
-<<<<<<< Updated upstream
-Sreamlit based application for RUL display
-=======
 Streamlit based application for displaying Remaining Useful Life (RUL) of Turbofan Engines.
 
 # Deployment to AWS Elastic Beanstalk utilizing AWS CLI and EB CLI
