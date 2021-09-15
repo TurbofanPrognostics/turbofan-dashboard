@@ -21,9 +21,9 @@ from html_header import html
 
 # backend request params
 port = 80
-# host = 'turbo-fast-app-dev.us-west-2.elasticbeanstalk.com'
+host = 'turbo-fast-app-dev.us-west-2.elasticbeanstalk.com'
 # use this host when testing local FastAPI docker deployment from streamlit
-host = 'host.docker.internal' 
+# host = 'host.docker.internal' 
 url = f'http://{host}:{port}'
 
 @st.cache
