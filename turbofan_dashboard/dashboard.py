@@ -21,7 +21,7 @@ from html_header import html
 
 # backend request params
 port = 80
-# host = 'turbo-fast-app-dev.us-west-2.elasticbeanstalk.com'
+host = 'turbo-fast-app-dev.us-west-2.elasticbeanstalk.com'
 # use this host when testing local FastAPI docker deployment from streamlit
 host = 'host.docker.internal' 
 url = f'http://{host}:{port}'
@@ -59,7 +59,7 @@ def build_payload(df: pd.DataFrame) -> Dict[str, List[float]]:
         to_return[col] = ["NaN" if val == np.nan else val for index, val in inner_dict.items()]
     return to_return
 
-st.set_page_config(page_title="Turbofan Prognostics Dashboard",
+st.set_page_config(page_title="Turbofan Engine Failure Simulation",
                    page_icon="", layout="wide")
 st.markdown('<style>body{background-color: #fbfff0}</style>',
             unsafe_allow_html=True)
@@ -69,9 +69,7 @@ st.markdown(""" <style>
 footer {visibility: hidden;}
 </style> """,
 unsafe_allow_html=True)
-
-st.title('Hello, my name is TurboFan App!')
-st.header('And I like to make engine failure predictions!')
+st.markdown('### Select an engine #, pick a model, and hit start!')
 
 # load test data for simulation
 train_df = load_train_data()
@@ -90,7 +88,7 @@ with st.form(key='simulation_form'):
                             options=engines,
                             help="Select engine to plot")
     model_select: str = st.sidebar.selectbox(
-                            label='Select A Model',
+                            label='Pick A Model',
                             options=models,
                             help='Select model for inference')
     submit_button = st.form_submit_button(label='Start Simulation')
